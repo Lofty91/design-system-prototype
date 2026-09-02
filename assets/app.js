@@ -14,16 +14,72 @@
     return section.groups.flatMap(g => g.items);
   }
 
-  function renderNav() {
-    nav.innerHTML = `<a class="nav-heading" href="#/">Home</a>` + ds.sections.map(section => {
-      let items = '';
-      if (section.items) {
-        items = `<ul class="nav-list">${section.items.map(i => `<li><a data-route="${section.slug}/${i[0]}" href="#/${section.slug}/${i[0]}">${i[1]}</a></li>`).join('')}</ul>`;
-      } else {
-        items = section.groups.map(g => `${g.label ? `<div class="nav-subgroup"><div class="nav-subgroup-label">${g.label}</div>` : ''}<ul class="nav-list">${g.items.map(i => `<li><a data-route="${section.slug}/${i[0]}" href="#/${section.slug}/${i[0]}">${i[1]}</a></li>`).join('')}</ul>${g.label ? `</div>` : ''}`).join('');
-      }
-      return `<div class="nav-group"><div class="nav-heading">${section.title}</div>${items}</div>`;
-    }).join('');
+  function navItems(section, items) {
+  return `<ul class="nav-list">${items.map(i =>
+    `<li><a data-route="${section.slug}/${i[0]}" href="#/${section.slug}/${i[0]}">${i[1]}</a></li>`
+  ).join('')}</ul>`;
+}
+
+function renderNav() {
+  nav.innerHTML = `<a class="nav-heading nav-home" href="#/">Home</a>` + ds.sections.map(section => {
+    const sectionId = `nav-section-${section.slug}`;
+
+    let items = '';
+
+    if (section.items) {
+      items = navItems(section, section.items);
+    } else {
+      items = section.groups.map((group, index) => {
+        if (!group.label) return navItems(section, group.items);
+
+        const groupId = `nav-group-${section.slug}-${index}`;
+
+        return `
+          <div class="nav-subgroup">
+            <button class="nav-heading nav-toggle nav-subgroup-toggle"
+                    type="button"
+                    aria-expanded="false"
+                    aria-controls="${groupId}">
+              <span>${group.label}</span>
+              <span class="nav-chevron" aria-hidden="true">›</span>
+            </button>
+
+            <div class="nav-panel nav-subgroup-panel" id="${groupId}" hidden>
+              ${navItems(section, group.items)}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    return `
+      <div class="nav-group">
+        <button class="nav-heading nav-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="${sectionId}">
+          <span>${section.title}</span>
+          <span class="nav-chevron" aria-hidden="true">›</span>
+        </button>
+
+        <div class="nav-panel" id="${sectionId}" hidden>
+          ${items}
+        </div>
+      </div>`;
+  }).join('');
+
+  nav.addEventListener('click', e => {
+    const button = e.target.closest('.nav-toggle');
+    if (!button) return;
+
+    const panel = document.getElementById(button.getAttribute('aria-controls'));
+    if (!panel) return;
+
+    const isOpen = button.getAttribute('aria-expanded') === 'true';
+
+    button.setAttribute('aria-expanded', String(!isOpen));
+    panel.hidden = isOpen;
+  });
+}
   }
 
   function home() {
@@ -69,12 +125,38 @@
     return `<article class="content"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="#/">Home</a><span>${section ? section.title : ''}</span><span>${page.title}</span></nav><p class="eyebrow">${section ? section.title : 'Design System'}</p><h1>${page.title}</h1><p class="lede">${page.lede}</p>${pageMeta(page)}${page.body}${prevNext(route)}</article>`;
   }
 
-  function updateCurrent(route) {
-    document.querySelectorAll('[data-route]').forEach(a => {
-      if (a.dataset.route === route) a.setAttribute('aria-current','page');
-      else a.removeAttribute('aria-current');
-    });
+  function openNavPanel(panel) {
+  if (!panel) return;
+
+  panel.hidden = false;
+
+  const button = document.querySelector(`[aria-controls="${panel.id}"]`);
+  if (button) {
+    button.setAttribute('aria-expanded', 'true');
   }
+}
+
+function updateCurrent(route) {
+  let currentLink = null;
+
+  document.querySelectorAll('[data-route]').forEach(a => {
+    if (a.dataset.route === route) {
+      a.setAttribute('aria-current', 'page');
+      currentLink = a;
+    } else {
+      a.removeAttribute('aria-current');
+    }
+  });
+
+  if (!currentLink) return;
+
+  let panel = currentLink.closest('.nav-panel');
+
+  while (panel) {
+    openNavPanel(panel);
+    panel = panel.parentElement.closest('.nav-panel');
+  }
+}
 
   function render() {
     const route = location.hash.replace(/^#\/?/, '');
