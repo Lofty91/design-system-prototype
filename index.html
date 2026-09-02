@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Generic design system prototype">
+  <title>Design System</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+  <header class="topbar">
+    <button class="menu-button" id="menuButton" aria-expanded="false" aria-controls="sidebar">Menu</button>
+    <a class="brand" href="#/">Design System <span>Prototype</span></a>
+    <div class="top-actions">
+      <button id="searchButton" class="search-trigger" aria-haspopup="dialog">Search <kbd>/</kbd></button>
+      <a class="utility-link" href="#/contribute/changelog">Changelog</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Design system navigation">
+      <nav id="sidebarNav"></nav>
+    </aside>
+    <main id="main" class="main" tabindex="-1"></main>
+  </div>
+
+  <dialog id="searchDialog" class="search-dialog">
+    <form method="dialog" class="search-shell">
+      <div class="search-row">
+        <label class="sr-only" for="searchInput">Search the design system</label>
+        <input id="searchInput" type="search" placeholder="Search foundations, components, guidance…" autocomplete="off">
+        <button value="close" aria-label="Close search">Close</button>
+      </div>
+      <div id="searchResults" class="search-results" aria-live="polite"></div>
+    </form>
+  </dialog>
+
+  <script src="assets/content.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
